@@ -1,0 +1,24 @@
+# Python
+*.pyc
+__pycache__/
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# IDE Files (PyCharm)
+.idea/
+
+# Operating System Files
+.DS_Store # macOS
+Thumbs.db # Windows
+
+# Log and Database Files
+daily_logs/
+*.log
+*.sqlite3 # If you use SQLite for local DB
+
+# Dynamically generated content (don't upload to Git if written at runtime)
+voice_clips/
+static/qr_display/

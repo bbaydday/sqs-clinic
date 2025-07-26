@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Smart Queue Display</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+    }
+
+    .page {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: none;
+    }
+
+    .page.show {
+      display: flex;
+    }
+
+    /* Page 1: Token Display */
+    #page1 {
+      background: linear-gradient(135deg, #00ACB1, #015D67);
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .token-display {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 40px 80px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(5px);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      animation: pulse 2s infinite alternate;
+    }
+
+    #page1 h1 {
+      font-size: 120px;
+      margin: 0;
+      color: white;
+      text-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+      letter-spacing: 5px;
+    }
+
+    .arrow {
+      width: 120px;
+      margin-top: 40px;
+      animation: bounce 1.5s infinite ease-in-out;
+      filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.3));
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
+      100% { transform: scale(1.03); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4); }
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+
+    /* Page 2: Full-screen Video with QR Panel */
+    #page2 {
+      display: flex;
+    }
+
+    .video-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      width: 75%; /* 3/4 of screen */
+    }
+
+    .video-container video {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+    }
+
+    .qr-section {
+      width: 25%; /* 1/4 of screen */
+      background: linear-gradient(135deg, #015D67, #00343A);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      box-shadow: -5px 0 15px rgba(0, 0, 0, 0.2);
+      z-index: 10;
+    }
+
+    .qr-container {
+      text-align: center;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .qr-container h1 {
+      font-size: 24px;
+      margin-bottom: 25px;
+      color: white;
+      text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+
+    .qr-container img {
+      width: 100%;
+      max-width: 250px;
+      height: auto;
+      aspect-ratio: 1/1;
+      border: 4px solid white;
+      border-radius: 12px;
+      background: white;
+      padding: 12px;
+      box-sizing: border-box;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .qr-container p {
+      margin-top: 20px;
+      font-size: 18px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Page 1: Token Display -->
+<div id="page1" class="page show">
+  <div class="token-display">
+    <h1>TOKEN HERE</h1>
+  </div>
+  <img class="arrow" src="./static/arrow1.png" alt="Arrow" />
+</div>
+
+<!-- Page 2: Video and QR -->
+<div id="page2" class="page">
+  <div class="video-container" id="video-wrapper">
+    <video id="main-video" autoplay muted loop playsinline>
+      <source src="/static/hospital.mp4" type="video/mp4">
+      <source src="/static/hospital.webm" type="video/webm">
+      Your browser does not support HTML5 video.
+    </video>
+  </div>
+  <div class="qr-section">
+    <div class="qr-container">
+      <h1>Scan Your Token QR</h1>
+      <img id="qr-image" src="{{ url_for('static', filename='qr_display/latest_qr.png') }}" alt="QR Code">
+      <p>Please scan to proceed</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const pages = [document.getElementById('page1'), document.getElementById('page2')];
+  let currentPage = 0;
+  const videoElement = document.getElementById('main-video');
+  const videoSources = [
+    { mp4: "/static/hospital.mp4", webm: "/static/hospital.webm" },
+    { mp4: "/static/EnerconC.mp4", webm: "/static/EnerconC.webm" }
+  ];
+  let currentVideoIndex = 0;
+
+  function showPage(index) {
+    pages.forEach((page, i) => {
+      page.classList.remove('show');
+      if (i === index) page.classList.add('show');
+    });
+  }
+
+  function switchVideo() {
+    currentVideoIndex = (currentVideoIndex + 1) % videoSources.length;
+    const sources = videoSources[currentVideoIndex];
+
+    // Change video source
+    videoElement.innerHTML = `
+      <source src="${sources.mp4}" type="video/mp4">
+      <source src="${sources.webm}" type="video/webm">
+      Your browser does not support HTML5 video.
+    `;
+
+    // Force video to load and play
+    videoElement.load();
+    videoElement.play().catch(e => console.log("Autoplay prevented:", e));
+  }
+
+  function startLoop() {
+    showPage(0); // Show Token Page first
+
+    setTimeout(() => {
+      showPage(1); // Show Video+QR Page after 5 seconds
+
+      // Play first video for 15 seconds
+      setTimeout(() => {
+        switchVideo(); // Switch to second video
+
+        // After another 15 seconds, restart the loop
+        setTimeout(() => {
+          startLoop(); // Restart the loop
+        }, 15000);
+      }, 15000);
+    }, 5000); // Token page duration (5 seconds)
+  }
+
+  // Start page loop
+  startLoop();
+
+  // Refresh QR image every 2 seconds only on Page 2
+  function refreshQRImage() {
+    const qrPage = document.getElementById('page2');
+    if (qrPage.classList.contains('show')) {
+      const qrImage = document.getElementById('qr-image');
+      const timestamp = new Date().getTime();
+      qrImage.src = `/static/qr_display/latest_qr.png?t=${timestamp}`;
+    }
+  }
+
+  setInterval(refreshQRImage, 2000);
+
+  // Handle window resize to maintain video aspect ratio
+  function resizeVideo() {
+    const videoWrapper = document.getElementById('video-wrapper');
+    const video = document.getElementById('main-video');
+    const wrapperRatio = videoWrapper.offsetWidth / videoWrapper.offsetHeight;
+    const videoRatio = video.videoWidth / video.videoHeight;
+
+    if (wrapperRatio > videoRatio) {
+      video.style.width = '100%';
+      video.style.height = 'auto';
+    } else {
+      video.style.width = 'auto';
+      video.style.height = '100%';
+    }
+  }
+
+  window.addEventListener('resize', resizeVideo);
+  videoElement.addEventListener('loadedmetadata', resizeVideo);
+</script>
+
+</body>
+</html>
