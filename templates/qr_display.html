@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Smart Queue Display</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+
+    .page {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .page.show {
+      display: flex;
+    }
+
+    #page1 {
+      background: #00ACB1;
+    }
+
+    #page1 h1 {
+      font-size: 100px;
+      background-color: #015D67;
+      text-shadow: 0 0 10px #000;
+      animation: glowFade 1.5s ease-in-out infinite alternate;
+      padding: 20px 60px;
+      border-radius: 12px;
+    }
+
+    .arrow {
+      font-size: 80px;
+      animation: upDown 1s infinite ease-in-out;
+      width: 150px;
+      margin-top: 20px;
+    }
+
+    @keyframes upDown {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+      100% { transform: translateY(0); }
+    }
+
+    @keyframes glowFade {
+      0%   { opacity: 0.7; text-shadow: 0 0 5px #2c3e50; }
+      50%  { opacity: 0.9; text-shadow: 0 0 15px #2c3e50; }
+      100% { opacity: 1;   text-shadow: 0 0 25px #2c3e50; }
+    }
+
+    /* QR Container & Banner */
+    .qr-container {
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 20px;
+      text-shadow: 0 0 5px black;
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+      padding: 10px;
+      z-index: 10;
+    }
+
+    .qr-container img {
+      border: 3px solid white;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+
+    .bottom-banner {
+      position: absolute;
+      top:630px;
+      width: 74%;
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+      padding: 10px 0;
+      overflow: hidden;
+      height: 50px;
+      z-index: 10;
+      left:0;
+
+    }
+
+    .banner-text {
+      white-space: nowrap;
+      display: inline-block;
+      padding-left: 100%;
+      animation: scrollBanner 15s linear infinite;
+    }
+
+    @keyframes scrollBanner {
+      0% { transform: translateX(0%); }
+      100% { transform: translateX(-100%); }
+    }
+
+    /* Page 3 */
+    #page3 video {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: -1;
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- Page 1 -->
+<div id="page1" class="page show">
+  <h1>TOKEN HERE</h1>
+  <img class="arrow" src="./static/arrow1.png" alt="Arrow" />
+</div>
+
+<!-- Page 3 (combined QR + Banner + Video Slides) -->
+<div id="page3" class="page">
+  <video id="videoPlayer" autoplay muted playsinline></video>
+
+  <div class="qr-container">
+    <h1>Scan Your Token QR</h1>
+    <img id="qr-image" src="{{ url_for('static', filename='qr_display/latest_qr.png') }}" alt="QR Code" width="200">
+    <p>Waiting for new token...</p>
+  </div>
+
+  <div class="bottom-banner">
+    <div class="banner-text">
+      👩‍⚕️ လူနာများအတွက် ကျန်းမာရေးစစ်ဆေးခြင်းအခမဲ့! &nbsp;&nbsp;&nbsp;
+      💊 ဆေးဝယ်သူများအတွက် ၁၀% လျော့စျေး! &nbsp;&nbsp;&nbsp;
+      📱 QR Code ဖြင့် Check-In လုပ်နိုင်ပါသည်!
+    </div>
+  </div>
+</div>
+
+<!-- SCRIPT -->
+<script>
+  const pages = [
+    document.getElementById('page1'),
+    document.getElementById('page3')
+  ];
+
+  const videoPlayer = document.getElementById("videoPlayer");
+  const videoList = [
+    "/static/hospital.mp4",
+    "/static/Of.mp4"
+  ];
+  let videoIndex = 0;
+
+  function showPage(index) {
+    pages.forEach((page, i) => {
+      page.classList.remove('show');
+      if (i === index) page.classList.add('show');
+    });
+  }
+
+  function playNextVideo() {
+    videoPlayer.src = videoList[videoIndex];
+    videoPlayer.play();
+
+    videoPlayer.onended = () => {
+      videoIndex = (videoIndex + 1) % videoList.length;
+      playNextVideo();
+    };
+  }
+
+  // QR Refresh
+  function refreshQRImage() {
+    const qrImage = document.getElementById('qr-image');
+    const timestamp = new Date().getTime();
+    qrImage.src = `/static/qr_display/latest_qr.png?t=${timestamp}`;
+  }
+
+  // Main Loop
+  function startLoop() {
+    showPage(0); // Show token
+    setTimeout(() => {
+      showPage(1); // Show QR + video
+      videoIndex = 0;
+      playNextVideo();
+    }, 4000); // 4 seconds token page
+  }
+
+  // Start everything
+  startLoop();
+  setInterval(refreshQRImage, 2000);
+</script>
+
+</body>
+</html>
